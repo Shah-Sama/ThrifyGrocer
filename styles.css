@@ -1,19 +1,18 @@
 /* Basic Styling */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    background: #f4f4f4;
+    color: #333;
 }
 
 header {
     background-color: #4CAF50;
     color: white;
-    text-align: center;
     padding: 1em;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    text-align: center;
 }
 
 #menu-button {
@@ -46,19 +45,21 @@ nav ul li a {
     display: block;
 }
 
-nav ul li a:hover {
+nav ul li a:hover, nav ul li a:focus {
     background-color: #ddd;
     color: black;
 }
 
 .container {
     width: 90%;
-    margin: auto;
-    overflow: hidden;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.main-content {
-    margin-top: 20px;
+.main-content, .container {
+    text-align: center;
 }
 
 footer {
