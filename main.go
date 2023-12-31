@@ -1,72 +1,81 @@
 package main
 
 import (
-    "encoding/json"
-    "fmt"
-    "log"
-    "net/http"
-    "net/smtp"
+	"errors"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
+type todo struct {
+	ID        string `json:"id"`
+	Item      string `json:"item"`
+	Completed bool   `json:"completed"`
+}
 
-type EmailContent struct {
-    Name    string `json:"name"`
-    Email   string `json:"email"`
-    Message string `json:"message"`
+var todos = []todo{
+	{ID: "1", Item: "Bananas", Completed: false},
+	{ID: "2", Item: "Bread", Completed: false}, // Added comma here
+	{ID: "3", Item: "Apples", Completed: false},
+}
+
+func getTodos(context *gin.Context) {
+	context.IndentedJSON(http.StatusOK, todos) // Corrected typo here and changed StatusOk to StatusOK
+}
+
+func addTodo(context *gin.Context) {
+	var newTodo todo
+
+	if err := context.BindJSON(&newTodo); err != nil {
+		return
+	}
+
+	todos = append(todos, newTodo)
+
+	context.IndentedJSON(http.StatusCreated, newTodo)
+}
+
+func getTodo(context *gin.Context) {
+	id := context.Param("id")
+	todo, err := getTodoById(id)
+
+	if err != nil {
+		context.IndentedJSON(http.StatusNotFound, gin.H{"message": "Todo not found"})
+		return
+	}
+	context.IndentedJSON(http.StatusOK, todo)
+
+}
+
+func toggleTodoStatus(context *gin.Context) {
+	id := context.Param("id")
+	todo, err := getTodoById(id)
+
+	if err != nil {
+		context.IndentedJSON(http.StatusNotFound, gin.H{"message": "Todo not found"})
+		return
+	}
+
+	todo.Completed = !todo.Completed
+
+	context.IndentedJSON(http.StatusOK, todo)
+}
+
+func getTodoById(id string) (*todo, error) {
+	for i, t := range todos {
+		if t.ID == id {
+			return &todos[i], nil
+		}
+	}
+
+	return nil, errors.New("todo not found")
 }
 
 func main() {
-    http.HandleFunc("/send-email", sendEmailHandler)
-    log.Fatal(http.ListenAndServe(":8080", nil))
-}
-
-func sendEmailHandler(w http.ResponseWriter, r *http.Request) {
-    var email EmailContent
-    err := json.NewDecoder(r.Body).Decode(&email)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    sendEmail(email)
-    fmt.Fprintf(w, "Email sent successfully")
-}
-
-func sendEmail(emailContent EmailContent) {
-    // Set up authentication information.
-    auth := smtp.PlainAuth("", "your-email@gmail.com", "your-password", "smtp.gmail.com")
-
-    to := []string{"shaheerarfat111@gmail.com"}
-    msg := []byte("To: shaheerarfat111@gmail.com\r\n" +
-        "Subject: Contact Form Submission\r\n" +
-       
-
-
-func main() {
-    http.HandleFunc("/submit-grocery-form", handleGroceryForm)
-    log.Println("Starting server on :8080...")
-    log.Fatal(http.ListenAndServe(":8080", nil))
-}
-
-func handleGroceryForm(w http.ResponseWriter, r *http.Request) {
-    // Ensure we're getting a POST request
-    if r.Method != http.MethodPost {
-        http.Error(w, "Method is not supported.", http.StatusNotFound)
-        return
-    }
-
-    // Parse the form data
-    if err := r.ParseForm(); err != nil {
-        fmt.Fprintf(w, "ParseForm() error: %v", err)
-        return
-    }
-
-    // Extract form data
-    fmt.Println("Received form data:")
-    for key, value := range r.Form {
-        fmt.Printf("%s = %s\n", key, value)
-    }
-
-    // Respond to the client
-    fmt.Fprintf(w, "Received your request!")
+	router := gin.Default()
+	router.GET("/todos", getTodos)
+	router.GET("/todos/:id", getTodo)
+	router.PATCH("/todos/:id", toggleTodoStatus)
+	router.POST("/todos", addTodo)
+	router.Run("localhost:9090")
 }
